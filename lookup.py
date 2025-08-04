@@ -14,7 +14,6 @@ def gather_cards():
         card_list=cards.find_all('a',class_='item ae-card-link cardLink')
         for card in card_list:
             temp.cards.append(Card(card, temp))
-        temp.display()
     return sets_list
 
 if __name__=="__main__":
