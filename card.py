@@ -1,7 +1,9 @@
-from enums import Type, Rarity, Color
+from enums import Rarity, Color
 import requests
 from bs4 import BeautifulSoup
+from sets import MTG_Set
 
+MAX_COLORLESS = 20 # Estimate
 BASE_URL = "https://aetherhub.com"
 SET_URL = BASE_URL + "/Card/Set"
 color_dict = {"ms-r":"RED",
@@ -10,19 +12,20 @@ color_dict = {"ms-r":"RED",
               "ms-b":"BLACK",
               "ms-g":"GREEN",
               "ms-x":"VARIABLE"}
-for x in range(20):
+for x in range(MAX_COLORLESS):
     color_dict[f"ms-{x}"]="COLORLESS"
 
 class Card:
-    def __init__(self, html_set):
+    def __init__(self, html_set, set: MTG_Set):
         self.html_set=html_set
         self.title = self.html_set.find('div', class_="item-hidden-text").contents[0]
         self.url=BASE_URL + self.html_set.get('href')
         self.page = requests.get(self.url)
         self.soup = BeautifulSoup(self.page.content, 'html.parser')
         temp = self.soup.find('div',id="cardInfo")
+        if not temp:
+            return
         self.img_url = temp.find('img')['src']
-        # print(temp.prettify())
         self.card_details=temp.find('div',class_="col-sm-12 col-md-6 mt-3 mt-md-0")
         temp_colors = self.card_details.find('span', class_="pull-right")
         cost = temp_colors.find_all('i')
@@ -44,21 +47,37 @@ class Card:
             for colorcosts in self.mana_cost.keys():
                 self.color += Color[colorcosts]
         
-        print(f"Color {self.color:05b} -->",self.mana_cost)
+        paragraphs = self.card_details.find_all('p')
+        tmp = paragraphs[0].contents[0].split("—")
+        self.type = tmp[0]
+        if len(tmp)>1:
+            self.subtype = tmp[1]
+        else:
+            self.subtype = ""
 
-            
-        # TODO: Anything below needs processed
-        self.type = Type.Creatures
-        self.subtype = ""
-        self.power = 0
-        self.toughness = 0
-        self.abilities = []
-        self.description = ""
-        self.quote = ""
-        self.rarity = Rarity.COMMON
-        self.foil = False
-        self.set = ""
-        self.border_color="black"
+        self.quote = str(paragraphs[-2].contents[0])
+        self.quote = self.quote.replace("<i>","")
+        self.quote = self.quote.replace("</i>","")
+        self.set = set
+
+        self.abilities = "".join(map(str,paragraphs[1].contents)).split("<br/>")        
+        # cleanup to show ability mana costs
+        for idx, each in enumerate(self.abilities):
+            self.abilities[idx] = each.replace("<i class=\"ms ms-","").replace("ms-cost ms-shadow\"></i>","")
+        
+        temp_rarity = self.card_details.find('small').contents[-1]
+        temp_rarity = temp_rarity.strip()
+        if temp_rarity == "Common":
+            self.rarity = Rarity.COMMON
+        elif temp_rarity == "Uncommon":
+            self.rarity = Rarity.UNCOMMON
+        elif temp_rarity == "Rare":
+            self.rarity = Rarity.RARE
+        elif temp_rarity == "Mythic Rare":
+            self.rarity = Rarity.MYTHIC_RARE
+        else:
+            self.rarity = Rarity.UNKNOWN
+
 
     def __str__(self):
-        return f"\n\t{self.title} --> {self.url}"
+        return f"\n\t{self.title} --> {self.set}"

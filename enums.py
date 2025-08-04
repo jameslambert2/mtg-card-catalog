@@ -9,25 +9,9 @@ Color={
     "RED"  :0x10,
 }
 
-class Type(Enum):
-    Artifacts = 1
-    Creatures = 2
-    Enchantments = 3
-    Instants = 4
-    Lands = 5
-    Planeswalkers = 6
-    Sorceries = 7
-    Kindreds = 8
-    Dungeons = 9
-    Battles = 10
-    Planes = 11
-    Phenomena = 12
-    Vanguards = 13
-    Schemes = 14
-    Conspiracies = 15
-
 class Rarity(Enum):
+    UNKNOWN = 0
     COMMON = 1
     UNCOMMON = 2
     RARE = 3
-    MYTHIC = 4
+    MYTHIC_RARE = 4
