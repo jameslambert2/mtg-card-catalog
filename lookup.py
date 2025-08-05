@@ -36,9 +36,6 @@ def gather_cards(conn, cursor):
         conn.commit()
         process = psutil.Process(os.getpid())
         print(f"Memory Usage: {process.memory_info().rss / (1024 * 1024):.2f} MB")
-        i += 1
-        if i == 2:  # two set for testing
-            break 
         
     
 
