@@ -4,8 +4,7 @@ from bs4 import BeautifulSoup
 from sets import MTG_Set
 
 MAX_COLORLESS = 20 # Estimate
-BASE_URL = "https://aetherhub.com"
-SET_URL = BASE_URL + "/Card/Set"
+
 color_dict = {"ms-r":"RED",
               "ms-u":"BLUE",
               "ms-w":"WHITE",
@@ -16,18 +15,15 @@ for x in range(MAX_COLORLESS):
     color_dict[f"ms-{x}"]="COLORLESS"
 
 class Card:
-    def __init__(self, html_set, set: MTG_Set):
-        self.html_set=html_set
-        self.title = self.html_set.find('div', class_="item-hidden-text").contents[0]
-        self.url=BASE_URL + self.html_set.get('href')
-        self.page = requests.get(self.url)
-        self.soup = BeautifulSoup(self.page.content, 'html.parser')
+    def __init__(self, title: str, set: MTG_Set, page: requests.Response):
+        self.title = title
+        self.soup = BeautifulSoup(page.content, 'html.parser')
         temp = self.soup.find('div',id="cardInfo")
         if not temp:
-            return
+            raise Warning
         self.img_url = temp.find('img')['src']
-        self.card_details=temp.find('div',class_="col-sm-12 col-md-6 mt-3 mt-md-0")
-        temp_colors = self.card_details.find('span', class_="pull-right")
+        card_details=temp.find('div',class_="col-sm-12 col-md-6 mt-3 mt-md-0")
+        temp_colors = card_details.find('span', class_="pull-right")
         cost = temp_colors.find_all('i')
         self.mana_cost = dict()
         for item in cost:
@@ -47,7 +43,7 @@ class Card:
             for colorcosts in self.mana_cost.keys():
                 self.color += Color[colorcosts]
         
-        paragraphs = self.card_details.find_all('p')
+        paragraphs = card_details.find_all('p')
         tmp = paragraphs[0].contents[0].split("—")
         self.type = tmp[0]
         if len(tmp)>1:
@@ -65,7 +61,7 @@ class Card:
         for idx, each in enumerate(self.abilities):
             self.abilities[idx] = each.replace("<i class=\"ms ms-","").replace("ms-cost ms-shadow\"></i>","")
         
-        temp_rarity = self.card_details.find('small').contents[-1]
+        temp_rarity = card_details.find('small').contents[-1]
         temp_rarity = temp_rarity.strip()
         if temp_rarity == "Common":
             self.rarity = Rarity.COMMON
@@ -81,3 +77,6 @@ class Card:
 
     def __str__(self):
         return f"\n\t{self.title} --> {self.set}"
+    
+if __name__=="__main__":
+    pass

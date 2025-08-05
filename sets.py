@@ -17,7 +17,6 @@ class MTG_Set:
         self.title = content.find('b').contents[0]
         self.shortened = content.find('small').contents[0]
         self.url = SET_URL + f"/{self.shortened}"
-        self.cards = []
 
     def __str__(self):
         return f"{self.title}({self.shortened})"
