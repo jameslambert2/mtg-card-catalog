@@ -42,6 +42,13 @@ class Search_Results:
         self.cursor = cursor
         self.last_result = []
 
+    def get_set_by_title(self, title):
+        fmt = "SELECT shortened FROM sets WHERE shortened LIKE '%{0}%' OR title LIKE '%{0}%'"
+        self.cursor.execute(fmt.format(title))
+        set_list = self.cursor.fetchall()
+        return set_list
+            
+
     def get_card_by_id(self, id) -> DB_Card:
         fmt = "SELECT * FROM cards WHERE id = {0}"
         self.cursor.execute(fmt.format(id))
@@ -119,17 +126,27 @@ class Search_Results:
             params.append(rarity.value)
 
         if color:
-            query += " AND color & ? != 0"
-            params.append(color)
+            if Color[color]==0:
+                query += " AND color = ?"
+            else: 
+                query += " AND color & ? != 0"
+            params.append(Color[color])
 
         if set_shortened:
-            query += " AND set_shortened LIKE ?"
-            params.append(f"%{set_shortened}%")
+            tmp = self.get_set_by_title(set_shortened)
+            if tmp:
+                query += " AND( set_shortened LIKE ?"
+                params.append(f"%{tmp[0]}%")
+
+                for each in tmp[0:]:
+                    query += " OR set_shortened LIKE ?"
+                    params.append(f"%{each[0]}%")
+                query+=")"
 
         if title:
             query += " AND title LIKE ?"
             params.append(f"%{title}%")
-
+        print(query, params)
         self.cursor.execute(query, params)
         fetch_results = self.cursor.fetchall()
         self.last_result = fetch_results
@@ -151,11 +168,17 @@ if __name__ == "__main__":
 
     # cards = sr.get_all_cards()
     # for each in cards:
-    cards = sr.multi_command_building(set_shortened="LEA", title="black")
-    print(len(cards))
-    for each in cards:
-        print(
-            f"Set:{each.set:<6}\tR:{each.rarity.name:<12}\tID:{each.id:>6}\t Title: ",
-            each.title,
-        )
+    # cards = sr.multi_command_building(set_shortened="LEA", title="black")
+    # print(len(cards))
+    # for each in cards:
+    #     print(
+    #         f"Set:{each.set:<6}\tR:{each.rarity.name:<12}\tID:{each.id:>6}\t Title: ",
+    #         each.title,
+    #     )
+
+    tmp = sr.get_set_by_title("EOE")
+    print(len(tmp))
+    for each in tmp:
+        print(each)
+
     conn.close()
