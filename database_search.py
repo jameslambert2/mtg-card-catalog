@@ -156,25 +156,18 @@ class Search_Results:
         return cards
 
 
-# class DB_Set:
-#     def __init__(self, cursor: sqlite3.Cursor):
-#         self.cursor = cursor
-
-
 if __name__ == "__main__":
     conn = sqlite3.connect("card_db.db")
     cursor = conn.cursor()
     sr = Search_Results(cursor)
 
-    # cards = sr.get_all_cards()
-    # for each in cards:
-    # cards = sr.multi_command_building(set_shortened="LEA", title="black")
-    # print(len(cards))
-    # for each in cards:
-    #     print(
-    #         f"Set:{each.set:<6}\tR:{each.rarity.name:<12}\tID:{each.id:>6}\t Title: ",
-    #         each.title,
-    #     )
+    cards = sr.multi_command_building(set_shortened="LEA", title="black")
+    print(len(cards))
+    for each in cards:
+        print(
+            f"Set:{each.set:<6}\tR:{each.rarity.name:<12}\tID:{each.id:>6}\t Title: ",
+            each.title,
+        )
 
     tmp = sr.get_set_by_title("EOE")
     print(len(tmp))

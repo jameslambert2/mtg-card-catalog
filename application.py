@@ -38,39 +38,41 @@ def on_button_click(title, type, subtype, rarity, color, set_shortened):
 def main():
     root = Tk()
     root.title("MTG Card Catalog")
-    root.geometry("800x600")  # width x height
+    root.geometry("250x250")  # width x height
     my_label = Label(root, text="Welcome to the MTG Card Catalog!")
-    my_label.pack()  # Places the label in the window
-    Label(root, text = "Title").pack()
+    my_label.grid(row=0, column=0, columnspan=2)  # Places the label in the window
+    Label(root, text = "Title").grid(row=1, column=0)
     title_entry_box = Entry(root)
-    title_entry_box.pack()
+    title_entry_box.grid(row=1, column=1)
     
-    Label(root, text = "Type").pack()
+    Label(root, text = "Type").grid(row=2, column=0)
     type_entry_box = Entry(root)
-    type_entry_box.pack()
+    type_entry_box.grid(row=2, column=1)
     
-    Label(root, text = "Subtype").pack()
+    Label(root, text = "Subtype").grid(row=3, column=0)
     subtype_entry_box = Entry(root)
-    subtype_entry_box.pack()
+    subtype_entry_box.grid(row=3, column=1)
 
-    Label(root, text = "Rarity").pack()
+    Label(root, text = "Rarity").grid(row=4, column=0)
     active_var = StringVar(root)
     rarity_drop_box = OptionMenu(root, active_var, Rarity.COMMON.name, Rarity.UNCOMMON.name, Rarity.RARE.name, Rarity.MYTHIC_RARE.name)
-    rarity_drop_box.pack()
+    rarity_drop_box.config(width=15)
+    rarity_drop_box.grid(row=4, column=1)
 
-    Label(root, text = "Color").pack()
+    Label(root, text = "Color").grid(row=5, column=0)
     active_var2 = StringVar(root)
     color_drop_box = OptionMenu(root,active_var2, *(Color.keys()))
-    color_drop_box.pack()
+    color_drop_box.config(width=15)
+    color_drop_box.grid(row=5, column=1)
 
-    Label(root, text = "Set").pack()
+    Label(root, text = "Set").grid(row=6, column=0)
     set_entry_box = Entry(root)
-    set_entry_box.pack()
+    set_entry_box.grid(row=6, column=1)
 
     my_button = Button(
         root, text="Search", command=lambda: on_button_click(title_entry_box.get(), type_entry_box.get(), subtype_entry_box.get(), active_var.get(), active_var2.get(), set_entry_box.get())
     )
-    my_button.pack()  # Places the button in the window
+    my_button.grid(row=7, column=1)  # Places the button in the window
     root.mainloop()
 
 
