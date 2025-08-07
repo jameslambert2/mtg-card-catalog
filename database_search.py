@@ -101,7 +101,7 @@ class Search_Results:
 
 
 if __name__ == "__main__":
-    conn = sqlite3.connect('card_db.db')
+    conn = sqlite3.connect("card_db.db")
     cursor = conn.cursor()
     sr = Search_Results(cursor)
 
