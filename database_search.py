@@ -94,6 +94,50 @@ class Search_Results:
             cards.append(DB_Card(each))
         return cards
 
+    def multi_command_building(
+        self,
+        title="",
+        set_shortened="",
+        color="",
+        rarity=Rarity.UNKNOWN,
+        type="",
+        subtype="",
+    ):
+        query = "SELECT * FROM cards WHERE 1=1"
+        params = []
+
+        if subtype:
+            query += " AND subtype LIKE ?"
+            params.append(f"%{subtype}%")
+
+        if type:
+            query += " AND type LIKE ?"
+            params.append(f"%{type}%")
+
+        if rarity.value != 0:
+            query += " AND rarity = ?"
+            params.append(rarity.value)
+
+        if color:
+            query += " AND color & ? != 0"
+            params.append(color)
+
+        if set_shortened:
+            query += " AND set_shortened LIKE ?"
+            params.append(f"%{set_shortened}%")
+
+        if title:
+            query += " AND title LIKE ?"
+            params.append(f"%{title}%")
+
+        self.cursor.execute(query, params)
+        fetch_results = self.cursor.fetchall()
+        self.last_result = fetch_results
+        cards = []
+        for each in fetch_results:
+            cards.append(DB_Card(each))
+        return cards
+
 
 # class DB_Set:
 #     def __init__(self, cursor: sqlite3.Cursor):
@@ -105,8 +149,13 @@ if __name__ == "__main__":
     cursor = conn.cursor()
     sr = Search_Results(cursor)
 
-    cards = sr.get_all_cards()
+    # cards = sr.get_all_cards()
+    # for each in cards:
+    cards = sr.multi_command_building(set_shortened="LEA", title="black")
+    print(len(cards))
     for each in cards:
-        print(f"Set:{each.set}\tID:{each.id:>6}\t Title: ", each.title)
-
+        print(
+            f"Set:{each.set:<6}\tR:{each.rarity.name:<12}\tID:{each.id:>6}\t Title: ",
+            each.title,
+        )
     conn.close()
