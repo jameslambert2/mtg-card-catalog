@@ -48,10 +48,6 @@ def grab_image(id):
     conn.close()
 
 
-def enter_key_handler(event):
-    pass
-
-
 class Result:
     def __init__(self, results):
         self.results = results
