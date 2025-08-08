@@ -47,7 +47,6 @@ class Search_Results:
         self.cursor.execute(fmt.format(title))
         set_list = self.cursor.fetchall()
         return set_list
-            
 
     def get_card_by_id(self, id) -> DB_Card:
         fmt = "SELECT * FROM cards WHERE id = {0}"
@@ -126,9 +125,9 @@ class Search_Results:
             params.append(rarity.value)
 
         if color:
-            if Color[color]==0:
+            if Color[color] == 0:
                 query += " AND color = ?"
-            else: 
+            else:
                 query += " AND color & ? != 0"
             params.append(Color[color])
 
@@ -141,7 +140,7 @@ class Search_Results:
                 for each in tmp[0:]:
                     query += " OR set_shortened LIKE ?"
                     params.append(f"%{each[0]}%")
-                query+=")"
+                query += ")"
 
         if title:
             query += " AND title LIKE ?"
