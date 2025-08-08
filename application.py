@@ -1,7 +1,11 @@
 import sqlite3
 from tkinter import *
+from tkinter import ttk
+from PIL import Image, ImageTk
 from enums import Rarity, Color
+from urllib.request import urlopen
 from database_search import Search_Results
+import io
 
 name_to_rarity = {
     "COMMON" :Rarity.COMMON,
@@ -27,6 +31,7 @@ def on_button_click(title, type, subtype, rarity, color, set_shortened):
         type,
         subtype
     )
+    results = Result(cards)
     print(len(cards))
     for each in cards:
         print(
@@ -34,6 +39,55 @@ def on_button_click(title, type, subtype, rarity, color, set_shortened):
             each.title,
         )
     conn.close()
+
+def grab_image(id):
+    conn = sqlite3.connect("card_db.db")
+    cursor = conn.cursor()
+    sr = Search_Results(cursor)
+    card = sr.get_card_by_id(id)
+    with urlopen(card.img_url) as u:
+        raw_data = u.read()
+
+    image_pil = Image.open(io.BytesIO(raw_data))
+    image_tk = ImageTk.PhotoImage(image_pil)
+    window = Toplevel()
+    window.title("Card Image")
+    label = Label(window, image=image_tk)
+    label.image = image_tk
+    label.pack()
+    conn.close()
+
+
+class Result:
+    def __init__(self, results):
+        self.results = results
+        # Display 10 at a time with images
+        self.window = Toplevel()
+        self.window.title("Results")
+
+        scrollbar = Scrollbar(self.window)
+        scrollbar.pack( side = RIGHT, fill=Y )
+        mylist = ttk.Treeview(self.window, yscrollcommand = scrollbar.set )
+        mylist["columns"] = ("ID","Set", "Title")
+
+        mylist.heading("ID", text="ID")
+        mylist.heading("Set", text="Set")
+        mylist.heading("Title", text="Title", anchor="w")
+        mylist.column("#0", width=0,anchor="w")
+        mylist.column("ID", width=80, anchor="w")
+        mylist.column("Set", width=80, anchor="w")
+        mylist.column("Title", width=300, anchor="w")
+        for each in self.results:
+            mylist.insert("","end",  values =(f"{each.id}",f"{each.set}", f"{each.title}"))
+        
+        mylist.pack( side = LEFT, fill = BOTH )
+
+        # TODO: Open Window with card image (use lookup by id)
+        button = Button(self.window, text="View", command=lambda:grab_image(self.results[int(mylist.focus()[1:])-1].id))
+        button.pack(side = BOTTOM,anchor="s")
+        
+        scrollbar.config( command = mylist.yview )
+
 
 def main():
     root = Tk()
