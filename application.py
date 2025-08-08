@@ -2,7 +2,7 @@ import sqlite3
 from tkinter import *
 from tkinter import ttk
 from PIL import Image, ImageTk
-from enums import Rarity, Color
+from update_db.enums import Rarity, Color
 from urllib.request import urlopen
 from database_search import Search_Results
 import io
@@ -15,7 +15,6 @@ name_to_rarity = {
 }
 
 def on_button_click(title, type, subtype, rarity, color, set_shortened):
-    print(title,',', type,',',  subtype,',',  rarity,',',  color,',',  set_shortened)
     conn = sqlite3.connect("card_db.db")
     cursor = conn.cursor()
     sr = Search_Results(cursor)
@@ -31,13 +30,7 @@ def on_button_click(title, type, subtype, rarity, color, set_shortened):
         type,
         subtype
     )
-    results = Result(cards)
-    print(len(cards))
-    for each in cards:
-        print(
-            f"Set:{each.set:<6}\tR:{each.rarity.name:<12}\tID:{each.id:>6}\t Title: ",
-            each.title,
-        )
+    Result(cards)
     conn.close()
 
 def grab_image(id):
@@ -57,11 +50,12 @@ def grab_image(id):
     label.pack()
     conn.close()
 
+def enter_key_handler(event):
+    pass
 
 class Result:
     def __init__(self, results):
         self.results = results
-        # Display 10 at a time with images
         self.window = Toplevel()
         self.window.title("Results")
 
@@ -82,12 +76,14 @@ class Result:
         
         mylist.pack( side = LEFT, fill = BOTH )
 
-        # TODO: Open Window with card image (use lookup by id)
-        button = Button(self.window, text="View", command=lambda:grab_image(self.results[int(mylist.focus()[1:])-1].id))
+        button = Button(self.window, text="View", command=lambda:grab_image(self.results[int(mylist.focus()[1:],16)-1].id))
         button.pack(side = BOTTOM,anchor="s")
         
         scrollbar.config( command = mylist.yview )
 
+        # Bind the Enter key to a function that calls button_action
+
+        self.window.bind('<Return>', lambda event=None:button.invoke())
 
 def main():
     root = Tk()
@@ -148,6 +144,7 @@ def main():
     )
     # my_button.config(bg="BLUE")
     my_button.grid(row=7, column=1)  # Places the button in the window
+    root.bind('<Return>', lambda event=None:my_button.invoke())
     root.mainloop()
 
 

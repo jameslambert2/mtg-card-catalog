@@ -1,6 +1,6 @@
 import sqlite3
 import enum
-from enums import Rarity, Color
+from update_db.enums import Rarity, Color
 from typing import List
 import json
 
@@ -146,7 +146,6 @@ class Search_Results:
         if title:
             query += " AND title LIKE ?"
             params.append(f"%{title}%")
-        print(query, params)
         self.cursor.execute(query, params)
         fetch_results = self.cursor.fetchall()
         self.last_result = fetch_results
