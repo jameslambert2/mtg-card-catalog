@@ -4,7 +4,6 @@ import json
 import sqlite3
 import requests
 from bs4 import BeautifulSoup
-import psutil, os
 
 
 BASE_URL = "https://aetherhub.com"
@@ -37,8 +36,6 @@ def gather_cards(conn, cursor):
             except Warning:
                 print(f"Invalid Card : {title}")
         conn.commit()
-        process = psutil.Process(os.getpid())
-        print(f"Memory Usage: {process.memory_info().rss / (1024 * 1024):.2f} MB")
 
 
 def insert_set(cursor, card_set: MTG_Set):
