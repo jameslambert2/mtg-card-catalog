@@ -1,4 +1,4 @@
-from sets import MTG_Set, sets
+from sets import MTGSet, sets
 from card import Card
 import json
 import sqlite3
@@ -13,7 +13,7 @@ SET_URL = BASE_URL + "/Card/Set"
 def gather_cards(conn, cursor):
     i = 0
     for card_set in sets:
-        temp = MTG_Set(card_set)
+        temp = MTGSet(card_set)
         cursor.execute(
             f"SELECT EXISTS(SELECT 1 FROM sets WHERE shortened = ?)", (temp.shortened,)
         )
@@ -38,7 +38,7 @@ def gather_cards(conn, cursor):
         conn.commit()
 
 
-def insert_set(cursor, card_set: MTG_Set):
+def insert_set(cursor, card_set: MTGSet):
     cursor.execute(
         """
         INSERT OR IGNORE INTO sets (shortened, title, release_date, url)
