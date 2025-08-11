@@ -2,7 +2,7 @@
 application.py
 
 Created By: James Lambert
-Updated: 08 Aug 2025
+Updated: 11 Aug 2025
 
 This file when executed creates a GUI with Tkinter that allows a user to 
 search through the database using sqlite3 for all available cards and/or sets.
@@ -34,7 +34,7 @@ import io
 from PIL import Image, ImageTk
 
 from .update_db.enums import Rarity, Color
-from .database_search import Search_Results, DB_FILE
+from .database_search import SearchResults, DB_FILE
 
 name_to_rarity = {
     "COMMON": Rarity.COMMON,
@@ -59,14 +59,20 @@ def on_button_click(args: tuple):
     title, card_type, subtype, rarity, color, set_shortened = args
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    sr = Search_Results(cursor)
+    sr = SearchResults(cursor)
     try:
         tmp_rarity = name_to_rarity[rarity]
     except KeyError:
         tmp_rarity = Rarity.UNKNOWN
     cards = sr.multi_command_building(
-        title, set_shortened, color, tmp_rarity, card_type, subtype
+        title=title,
+        set_shortened=set_shortened,
+        color=color,
+        rarity=tmp_rarity,
+        card_type=card_type,
+        subtype=subtype
     )
+
     result(cards)
     conn.close()
 
@@ -80,7 +86,7 @@ def grab_image(card_id):
     """
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    sr = Search_Results(cursor)
+    sr = SearchResults(cursor)
     card = sr.get_card_by_id(card_id)
     with urlopen(card.img_url) as u:
         raw_data = u.read()
@@ -102,7 +108,7 @@ def result(results):
     of the search provided before the function call
 
     Args:
-        results: List[DB_Card]
+        results: List[DbCard]
     """
     window = Toplevel()
     window.title("Results")
@@ -121,7 +127,7 @@ def result(results):
     mylist.column("Title", width=300, anchor="w")
     for each in results:
         mylist.insert(
-            "", "end", values=(f"{each.id}", f"{each.set}", f"{each.title}")
+            "", "end", values=(f"{each.card_id}", f"{each.set}", f"{each.title}")
         )
 
     mylist.pack(side=LEFT, fill=BOTH)
@@ -129,7 +135,7 @@ def result(results):
     button = Button(
         window,
         text="View",
-        command=lambda: grab_image(results[int(mylist.focus()[1:], 16) - 1].id),
+        command=lambda: grab_image(results[int(mylist.focus()[1:], 16) - 1].card_id),
     )
     button.pack(side=BOTTOM, anchor="s")
 
