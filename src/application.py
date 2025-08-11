@@ -33,8 +33,8 @@ import io
 
 from PIL import Image, ImageTk
 
-from update_db.enums import Rarity, Color
-from database_search import Search_Results, DB_FILE
+from .update_db.enums import Rarity, Color
+from .database_search import Search_Results, DB_FILE
 
 name_to_rarity = {
     "COMMON": Rarity.COMMON,

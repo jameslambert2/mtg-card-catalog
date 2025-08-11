@@ -1,6 +1,6 @@
 import sqlite3
 import enum
-from update_db.enums import Rarity, Color
+from .update_db.enums import Rarity, Color
 from typing import List
 import os
 
