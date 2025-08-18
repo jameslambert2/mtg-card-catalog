@@ -55,14 +55,14 @@ class Card:
         self.get_details(card_details)
 
 
-    def get_details(self, card_details: BeautifulSoup._AtMostOneElement):
+    def get_details(self, card_details):
         """
         Get the details of this card, including quote, rarity, color, mana
             cost, and abilities. This is not returned, it is updated in 
             self.details
 
         Args:
-            card_details (BeautifulSoup._AtMostOneElement): 
+            card_details (_AtMostOneElement): 
                 Result from BeautifulSoup.find() containing card information
         
         """
@@ -97,12 +97,12 @@ class Card:
             rarity = Rarity.UNKNOWN
         self.details = (quote, rarity, color, mana_cost, abilities)
 
-    def get_mana_cost(self, card_details: BeautifulSoup._AtMostOneElement):
+    def get_mana_cost(self, card_details):
         """
         Get the mana cost of this card
 
         Args:
-            card_details (BeautifulSoup._AtMostOneElement): 
+            card_details (_AtMostOneElement): 
                 Result from BeautifulSoup.find() containing the card information
         
         Returns:
