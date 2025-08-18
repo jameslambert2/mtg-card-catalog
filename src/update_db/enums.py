@@ -1,3 +1,11 @@
+"""
+enums.py
+
+Created by: James Lambert
+Last Updated: 11 Aug 2025
+
+Commonly used enums
+"""
 from enum import Enum
 
 Color = {
@@ -12,6 +20,10 @@ Color = {
 
 
 class Rarity(Enum):
+    """
+    Enum for Rarity Used for searching by Rarity
+    """
+
     UNKNOWN = 0
     COMMON = 1
     UNCOMMON = 2

@@ -1,27 +1,56 @@
-from sets import MTG_Set, sets
-from card import Card
+"""
+lookup.py
+
+Lookup the details of the MTG cards and sets for the catalog (database)
+for putting the information into the database
+
+Written by: James Lambert
+Last Updated: 18 Aug 2025
+"""
 import json
 import sqlite3
+from enum import Enum
+
 import requests
 from bs4 import BeautifulSoup
+
+from src.update_db.sets import MTGSet, sets
+from src.update_db.card import Card
+from src.database_search import DB_FILE
 
 
 BASE_URL = "https://aetherhub.com"
 SET_URL = BASE_URL + "/Card/Set"
 
+class Details(Enum):
+    """
+    enum for detail indexes
+    """
+    QUOTE = 0
+    RARITY = 1
+    COLOR = 2
+    COST = 3
+    ABILITIES = 4
+
 
 def gather_cards(conn, cursor):
-    i = 0
+    """
+    Gathers cards by set and puts them into the database of cards
+    if the set is not already in there.
+    Args:
+        conn(sqlite3.Connection): Connection to the database
+        cursor (sqlite3.Connection.Cursor): Cursor for lookups and
+            executing sql commands
+    """
     for card_set in sets:
-        temp = MTG_Set(card_set)
+        temp = MTGSet(card_set)
         cursor.execute(
-            f"SELECT EXISTS(SELECT 1 FROM sets WHERE shortened = ?)", (temp.shortened,)
+            "SELECT EXISTS(SELECT 1 FROM sets WHERE shortened = ?)", (temp.shortened,)
         )
-        exists = cursor.fetchone()[0]
-        if exists:
+        if cursor.fetchone()[0]:
             continue
         print(temp.title)
-        req = requests.get(temp.url)
+        req = requests.get(temp.url, timeout=15)
         soup = BeautifulSoup(req.content, "html.parser")
         cards = soup.find("div", id="cards")
         card_list = cards.find_all("a", class_="item ae-card-link cardLink")
@@ -29,7 +58,7 @@ def gather_cards(conn, cursor):
         for card in card_list:
             title = card.find("div", class_="item-hidden-text").contents[0]
             url = BASE_URL + card.get("href")
-            page = requests.get(url)
+            page = requests.get(url, timeout=15)
             try:
                 temp_card = Card(title, temp, page)
                 insert_card(cursor, temp_card, set_shortened)
@@ -38,7 +67,16 @@ def gather_cards(conn, cursor):
         conn.commit()
 
 
-def insert_set(cursor, card_set: MTG_Set):
+def insert_set(cursor, card_set: MTGSet):
+    """
+    Insert a set into the database of sets
+
+    Args:
+        cursor (sqlite3.Connection.Cursor): Cursor for lookups and
+            executing sql commands
+        card_set (MTGSet): Set object to get the information from to
+            add to the database
+    """
     cursor.execute(
         """
         INSERT OR IGNORE INTO sets (shortened, title, release_date, url)
@@ -50,6 +88,17 @@ def insert_set(cursor, card_set: MTG_Set):
 
 
 def insert_card(cursor, card: Card, set_shortened: str):
+    """
+    Insert a card into the database of cards
+
+    Args:
+        cursor (sqlite3.Connection.Cursor): Cursor for lookups and
+            executing sql commands
+        card (Card): Card object to get the information from to
+            add to the database
+        set_shortened (str): The short hand label of the set that
+            the card is from.
+    """
     cursor.execute(
         """
         INSERT INTO cards (
@@ -63,11 +112,11 @@ def insert_card(cursor, card: Card, set_shortened: str):
             card.img_url,
             card.type,
             card.subtype,
-            card.quote,
-            card.rarity.value,
-            card.color,
-            json.dumps(card.mana_cost),
-            json.dumps(card.abilities),
+            card.details[Details.QUOTE.value],
+            card.details[Details.RARITY.value].value,
+            card.details[Details.COLOR.value],
+            json.dumps(card.details[Details.COST.value]),
+            json.dumps(card.details[Details.ABILITIES.value]),
         ),
     )
 
@@ -75,9 +124,9 @@ def insert_card(cursor, card: Card, set_shortened: str):
 if __name__ == "__main__":
     # for each in all_cards:
     #     print(each.display())
-    conn = sqlite3.connect("card_db.db")
-    cursor = conn.cursor()
-    cursor.execute(
+    connection = sqlite3.connect(DB_FILE)
+    cursor_use = connection.cursor()
+    cursor_use.execute(
         """CREATE TABLE IF NOT EXISTS sets (
     shortened TEXT PRIMARY KEY,
     title TEXT NOT NULL,
@@ -86,7 +135,7 @@ if __name__ == "__main__":
     );"""
     )
 
-    cursor.execute(
+    cursor_use.execute(
         """CREATE TABLE IF NOT EXISTS cards (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     set_shortened TEXT NOT NULL,
@@ -103,5 +152,5 @@ if __name__ == "__main__":
     );"""
     )
 
-    gather_cards(conn, cursor)  # put into database file you want
-    conn.close()
+    gather_cards(connection, cursor_use)  # put into database file you want
+    connection.close()
