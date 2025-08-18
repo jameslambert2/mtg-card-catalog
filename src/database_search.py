@@ -20,10 +20,12 @@ REL_PATH = "card_db.db"
 
 DB_FILE = os.path.abspath(os.path.join(script_dir, REL_PATH))
 
+
 class DbOrder(enum.Enum):
     """
     Indexes for the results list
     """
+
     ID = 0
     SET = 1
     TITLE = 2
@@ -41,6 +43,7 @@ class DbCard:
     """
     DbCard Object
     """
+
     def __init__(self, fetch_results):
         """initialization function for DbCard
         
@@ -62,7 +65,7 @@ class DbCard:
         color = fetch_results[DbOrder.COLOR.value]
         cost = fetch_results[DbOrder.COST.value]
         abilities = fetch_results[DbOrder.ABILITIES.value]
-        self.details = (quote,rarity,color,cost,abilities,)
+        self.details = (quote, rarity, color, cost, abilities)
 
     def show_details(self):
         """
@@ -84,6 +87,7 @@ class SearchResults:
     SearchResults uses a provided Cursor to generate a query lookup 
     for the results requested
     """
+
     def __init__(self, cursor: sqlite3.Cursor):
         """
         Initialization function for SearchResults Object
@@ -201,24 +205,29 @@ class SearchResults:
         """
         query = "SELECT * FROM cards WHERE 1=1"
         params = []
-
+        subtype = kwargs.get("subtype")
+        card_type = kwargs.get("card_type")
+        rarity = kwargs.get("rarity")
+        set_shortened = kwargs.get("set_shortened")
+        title = kwargs.get("title")
+        color = kwargs.get("color")
         # Subtype
-        if subtype := kwargs.get("subtype"):
+        if subtype:
             query += " AND subtype LIKE ?"
             params.append(f"%{subtype}%")
 
         # Card type
-        if card_type := kwargs.get("card_type"):
+        if card_type:
             query += " AND type LIKE ?"
             params.append(f"%{card_type}%")
 
         # Rarity
-        if (rarity := kwargs.get("rarity")) and rarity.value != 0:
+        if rarity and rarity.value != 0:
             query += " AND rarity = ?"
             params.append(rarity.value)
 
         # Color
-        if color := kwargs.get("color"):
+        if color:
             if Color[color] == 0:  # colorless
                 query += " AND color = ?"
             else:
@@ -226,7 +235,7 @@ class SearchResults:
             params.append(Color[color])
 
         # Set search (matches multiple variations)
-        if set_shortened := kwargs.get("set_shortened"):
+        if set_shortened:
             tmp = self.get_set_by_title(set_shortened)
             if tmp:
                 query += " AND (set_shortened LIKE ?"
@@ -237,7 +246,7 @@ class SearchResults:
                 query += ")"
 
         # Title
-        if title := kwargs.get("title"):
+        if title:
             query += " AND title LIKE ?"
             params.append(f"%{title}%")
 

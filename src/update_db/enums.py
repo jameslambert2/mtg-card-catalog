@@ -23,6 +23,7 @@ class Rarity(Enum):
     """
     Enum for Rarity Used for searching by Rarity
     """
+
     UNKNOWN = 0
     COMMON = 1
     UNCOMMON = 2

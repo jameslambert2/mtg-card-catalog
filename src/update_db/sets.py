@@ -33,6 +33,7 @@ class MTGSet:
     Args:
         content: requests._AtMostOneElement - Results from find function
     """
+
     def __init__(self, content):
         self.release_date = content.find_all("td")[-1].contents[0]
         self.title = content.find("b").contents[0]
@@ -48,5 +49,7 @@ class MTGSet:
         Display the contents in the MTGSet object in a semi-structured format
         
         """
-        return (f"{self.title:<50} ({self.shortened}){' ' * (7-len(self.shortened))}",
-            f"\tReleased: {self.release_date}")
+        return (
+            f"{self.title:<50} ({self.shortened}){' ' * (7-len(self.shortened))}",
+            f"\tReleased: {self.release_date}",
+        )

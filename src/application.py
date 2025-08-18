@@ -34,14 +34,8 @@ import io
 from PIL import Image, ImageTk
 
 from .update_db.enums import Rarity, Color
+from .update_db.card import name_to_rarity
 from .database_search import SearchResults, DB_FILE
-
-name_to_rarity = {
-    "COMMON": Rarity.COMMON,
-    "UNCOMMON": Rarity.UNCOMMON,
-    "RARE": Rarity.RARE,
-    "MYTHIC_RARE": Rarity.MYTHIC_RARE,
-}
 
 def on_button_click(args: tuple):
     """
@@ -70,7 +64,7 @@ def on_button_click(args: tuple):
         color=color,
         rarity=tmp_rarity,
         card_type=card_type,
-        subtype=subtype
+        subtype=subtype,
     )
 
     result(cards)
@@ -202,14 +196,16 @@ def main():
     my_button = Button(
         root,
         text="Search",
-        command=lambda: on_button_click((
-            title_entry_box.get(),
-            type_entry_box.get(),
-            subtype_entry_box.get(),
-            active_var.get(),
-            active_var2.get(),
-            set_entry_box.get(),
-        )),
+        command=lambda: on_button_click(
+            (
+                title_entry_box.get(),
+                type_entry_box.get(),
+                subtype_entry_box.get(),
+                active_var.get(),
+                active_var2.get(),
+                set_entry_box.get(),
+            )
+        ),
     )
     my_button.grid(row=7, column=1)
     root.bind("<Return>", lambda event=None: my_button.invoke())

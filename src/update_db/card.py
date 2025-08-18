@@ -1,9 +1,25 @@
-from enums import Rarity, Color
+"""
+card.py
+
+Details of the MTG cards for the catalog (database) for more lookup viability
+
+Written by: James Lambert
+Last Updated: 18 Aug 2025
+"""
 import requests
 from bs4 import BeautifulSoup
-from sets import MTG_Set
+
+from src.update_db.enums import Rarity, Color
+from src.update_db.sets import MTGSet
 
 MAX_COLORLESS = 20  # Estimate
+
+name_to_rarity = {
+    "COMMON": Rarity.COMMON,
+    "UNCOMMON": Rarity.UNCOMMON,
+    "RARE": Rarity.RARE,
+    "MYTHIC_RARE": Rarity.MYTHIC_RARE,
+}
 
 color_dict = {
     "ms-r": "RED",
@@ -18,7 +34,16 @@ for x in range(MAX_COLORLESS):
 
 
 class Card:
-    def __init__(self, title: str, set: MTG_Set, page: requests.Response):
+    """
+    Card details for updating the Database.
+
+    Args:
+        title (str): Name of the card
+        card_set (MTGSet): Set the card is a part of
+        page (requests.Response): The request.get() response containing
+            the page details
+    """
+    def __init__(self, title: str, card_set: MTGSet, page: requests.Response):
         self.title = title
         self.soup = BeautifulSoup(page.content, "html.parser")
         temp = self.soup.find("div", id="cardInfo")
@@ -26,58 +51,87 @@ class Card:
             raise Warning
         self.img_url = temp.find("img")["src"]
         card_details = temp.find("div", class_="col-sm-12 col-md-6 mt-3 mt-md-0")
-        temp_colors = card_details.find("span", class_="pull-right")
-        cost = temp_colors.find_all("i")
-        self.mana_cost = dict()
-        for item in cost:
-            temp2 = item.get("class")[1]
-            if temp2 in color_dict.keys():
-                cost_color = color_dict[temp2]
-            else:
-                break
-            if cost_color == "COLORLESS":
-                self.mana_cost[cost_color] = int(temp2[3:])
-            elif cost_color in self.mana_cost.keys():
-                self.mana_cost[cost_color] += 1
-            else:
-                self.mana_cost[cost_color] = 1
-        self.color = 0
+        self.set = card_set
+        self.get_details(card_details)
+
+
+    def get_details(self, card_details: BeautifulSoup._AtMostOneElement):
+        """
+        Get the details of this card, including quote, rarity, color, mana
+            cost, and abilities. This is not returned, it is updated in 
+            self.details
+
+        Args:
+            card_details (BeautifulSoup._AtMostOneElement): 
+                Result from BeautifulSoup.find() containing card information
+        
+        """
+        cost, mana_cost = self.get_mana_cost(card_details)
+        color = 0
         if len(cost) != 0:
-            for colorcosts in self.mana_cost.keys():
-                self.color += Color[colorcosts]
+            for colorcosts in mana_cost:
+                color += Color[colorcosts]
 
         paragraphs = card_details.find_all("p")
-        tmp = paragraphs[0].contents[0].split("—")
-        self.type = tmp[0]
-        if len(tmp) > 1:
-            self.subtype = tmp[1]
+        temp = paragraphs[0].contents[0].split("—")
+        self.type = temp[0]
+        if len(temp) > 1:
+            self.subtype = temp[1]
         else:
             self.subtype = ""
 
-        self.quote = str(paragraphs[-2].contents[0])
-        self.quote = self.quote.replace("<i>", "")
-        self.quote = self.quote.replace("</i>", "")
-        self.set = set
-
-        self.abilities = "".join(map(str, paragraphs[1].contents)).split("<br/>")
+        quote = str(paragraphs[-2].contents[0])
+        quote = quote.replace("<i>", "")
+        quote = quote.replace("</i>", "")
+        abilities = "".join(map(str, paragraphs[1].contents)).split("<br/>")
         # cleanup to show ability mana costs
-        for idx, each in enumerate(self.abilities):
-            self.abilities[idx] = each.replace('<i class="ms ms-', "").replace(
+        for idx, each in enumerate(abilities):
+            abilities[idx] = each.replace('<i class="ms ms-', "").replace(
                 'ms-cost ms-shadow"></i>', ""
             )
+        temp = card_details.find("small").contents[-1]
+        temp = temp.strip()
+        temp = temp.upper()
+        rarity = name_to_rarity.get(temp)
+        if not rarity:
+            rarity = Rarity.UNKNOWN
+        self.details = (quote, rarity, color, mana_cost, abilities)
 
-        temp_rarity = card_details.find("small").contents[-1]
-        temp_rarity = temp_rarity.strip()
-        if temp_rarity == "Common":
-            self.rarity = Rarity.COMMON
-        elif temp_rarity == "Uncommon":
-            self.rarity = Rarity.UNCOMMON
-        elif temp_rarity == "Rare":
-            self.rarity = Rarity.RARE
-        elif temp_rarity == "Mythic Rare":
-            self.rarity = Rarity.MYTHIC_RARE
-        else:
-            self.rarity = Rarity.UNKNOWN
+    def get_mana_cost(self, card_details: BeautifulSoup._AtMostOneElement):
+        """
+        Get the mana cost of this card
+
+        Args:
+            card_details (BeautifulSoup._AtMostOneElement): 
+                Result from BeautifulSoup.find() containing the card information
+        
+        Returns:
+            (cost, mana_cost): Tuple(int, dict)
+        """
+        temp = card_details.find("span", class_="pull-right")
+        cost = temp.find_all("i")
+        mana_cost = {}
+        for item in cost:
+            temp = item.get("class")[1]
+            try:
+                cost_color = color_dict[temp]
+            except KeyError:
+                break
+            if cost_color == "COLORLESS":
+                mana_cost[cost_color] = int(temp[3:])
+            try:
+                mana_cost[cost_color] += 1
+            except KeyError:
+                mana_cost[cost_color] = 1
+        return cost, mana_cost
+
+
+
+    def display(self):
+        """
+        A print display for the card title and set its associated with
+        """
+        return f"\n\t{self.title} --> {self.set}"
 
     def __str__(self):
         return f"\n\t{self.title} --> {self.set}"
